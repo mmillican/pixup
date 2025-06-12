@@ -1,0 +1,28 @@
+﻿# Rename this to `pixup.yaml` and place in your source folder(s).
+
+source_path: ./
+storage:
+  provider: s3
+  s3:
+    bucket_name: my-bucket
+    path_prefix: things
+resize:
+  enabled: true
+  file_types: [ '.jpg', '.jpeg' ]
+  variants:
+    - key: thumbnail
+      width: 150
+      height: 150
+    - key: small
+      width: 300
+      height: 300
+    - key: medium
+      width: 600
+      height: 600
+    - key: large
+      width: 1200
+      height: 1200
+    - key: xl
+      width: 2000
+      height: 2000
+      

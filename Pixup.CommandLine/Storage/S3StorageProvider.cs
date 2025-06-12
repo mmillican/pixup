@@ -24,6 +24,8 @@ public class S3StorageProvider : IStorageProvider
         Console.WriteLine($"Uploading {file.Name} to {_config.BucketName}/{keyName}");
         
         await fileTransferUtility.UploadAsync(file.FullName, _config.BucketName, keyName);
+        
+        Console.WriteLine($"...uploaded {file.Name}");
     }
 
     public async Task SaveFiles(IEnumerable<FileInfo> files)

@@ -1,5 +1,6 @@
 ﻿using Pixup.CommandLine.Images;
 using Pixup.CommandLine.Models.Config;
+using Pixup.CommandLine.Storage;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -37,7 +38,10 @@ public class PixupProcessor
         Console.WriteLine($"Found {filesToProcess.Count} files to process...");
         
         var imageProcessor = new ImageProcessor(config.Resize);
-        await imageProcessor.ProcessImagesAsync(filesToProcess);
+        var processedImages = await imageProcessor.ProcessImagesAsync(filesToProcess);
+
+        var storageProvider = GetStorageProvider(config);
+        await storageProvider.SaveFiles(processedImages);
     }
     
     private static string NormalizePath(string path)
@@ -64,5 +68,18 @@ public class PixupProcessor
         
         var resolvedPath = Path.Combine(Directory.GetCurrentDirectory(), path);
         return Path.GetFullPath(resolvedPath);
+    }
+
+    private IStorageProvider GetStorageProvider(ProcessingConfiguration config)
+    {
+        var storageProviderKey = config.Storage.Provider.ToLower();
+        
+        switch (storageProviderKey)
+        {
+            case "s3":
+                return new S3StorageProvider(config.Storage.S3);
+            default:
+                throw new NotImplementedException($"Unsupported storage provider: {storageProviderKey}");
+        }
     }
 }

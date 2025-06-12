@@ -13,12 +13,14 @@ public class ImageProcessor
         _resizeConfiguration = resizeConfiguration;
     }
 
-    public async Task ProcessImageAsync(FileInfo sourceFile)
+    public async Task<List<FileInfo>> ProcessImageAsync(FileInfo sourceFile)
     {
         if (!_resizeConfiguration.Enabled || !IsResizeable(sourceFile))
         {
-            return;
+            return new List<FileInfo>();
         }
+        
+        var outputVariants = new List<FileInfo> { sourceFile };
         
         // Create the output directory if it doesn't exist
         var outputDirectory = Path.Combine(
@@ -43,12 +45,18 @@ public class ImageProcessor
             var outputFileName = $"{origFileName}-{variant.Key}{Path.GetExtension(sourceFile.Name)}";
             var outputPath = Path.Combine(outputDirectory, outputFileName);
             await variantImg.SaveAsync(outputPath);
+            
+            outputVariants.Add(new FileInfo(outputPath));
         }
+        
+        return outputVariants;
     }
 
-    public async Task ProcessImagesAsync(IEnumerable<FileInfo> files)
+    public async Task<List<FileInfo>> ProcessImagesAsync(IEnumerable<FileInfo> files)
     {
         var startTime = DateTime.Now;
+     
+        var result = new List<FileInfo>();
         
         var parallelOptions = new ParallelOptions
         {
@@ -57,12 +65,15 @@ public class ImageProcessor
 
         await Parallel.ForEachAsync(files, parallelOptions, async (file, _) =>
         {
-            await ProcessImageAsync(file);
+            var imageVariantResult = await ProcessImageAsync(file);
+            result.AddRange(imageVariantResult);
         });
         
         var endTime = DateTime.Now;
         var elapsedTime = endTime - startTime;
+        
         Console.WriteLine($"Processed {files.Count()} images in {elapsedTime.TotalMilliseconds} milliseconds.");
+        return result;
     }
 
     private static bool IsResizeable(FileInfo file)
